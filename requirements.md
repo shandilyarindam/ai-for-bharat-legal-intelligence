@@ -76,7 +76,7 @@ Traditional solutions are expensive, lack transparency, and provide no audit tra
 ### 4.5 Explainable AI (FR-005)
 
 **FR-005.1**: System shall provide plain-language explanations for each clause  
-**FR-005.2**: Explanations shall be available in multiple languages (English, Hindi, Spanish, French)  
+**FR-005.2**: Explanations shall be available in English (multi-language support in Phase 2)  
 **FR-005.3**: System shall explain why a clause is flagged as risky  
 **FR-005.4**: Users shall be able to request deeper explanations for complex clauses  
 **FR-005.5**: Explanations shall cite relevant legal principles or standards
@@ -96,16 +96,21 @@ Traditional solutions are expensive, lack transparency, and provide no audit tra
 **FR-007.3**: Reviewers can add comments and request explanations  
 **FR-007.4**: Admins can manage users, documents, and system settings  
 **FR-007.5**: Auditors have read-only access to all documents and audit logs  
-**FR-007.6**: System shall enforce role permissions at API Gateway level
+**FR-007.6**: System shall validate JWT tokens at API Gateway level  
+**FR-007.7**: System shall enforce role-based authorization at Lambda service layer
 
 ### 4.8 Audit Logging (FR-008)
 
 **FR-008.1**: System shall log all user actions with timestamp and user ID  
-**FR-008.2**: Audit logs shall be immutable and tamper-proof  
-**FR-008.3**: Logged events include: document upload, clause view, AI query, risk flag, export  
-**FR-008.4**: System shall use AWS CloudTrail for infrastructure-level audit  
-**FR-008.5**: Audit logs shall be retained for minimum 7 years  
-**FR-008.6**: System shall support audit log search and filtering
+**FR-008.2**: Audit logs shall be immutable and tamper-proof using append-only storage  
+**FR-008.3**: System shall implement hash chaining of audit entries for integrity verification  
+**FR-008.4**: System shall prevent audit log deletion or modification by any user role  
+**FR-008.5**: Logged events include: document upload, clause view, AI query, risk flag, export  
+**FR-008.6**: System shall use AWS CloudTrail for infrastructure-level audit  
+**FR-008.7**: Audit logs shall be retained for minimum 7 years  
+**FR-008.8**: System shall support audit log search and filtering  
+**FR-008.9**: AI analysis results shall be logged separately from user decisions  
+**FR-008.10**: System shall maintain clear distinction between AI recommendations and user actions
 
 ### 4.9 Export & Reporting (FR-009)
 
@@ -174,38 +179,147 @@ Traditional solutions are expensive, lack transparency, and provide no audit tra
 **NFR-006.4**: System shall have automated CI/CD pipeline  
 **NFR-006.5**: Code coverage target: > 80%
 
-## 6. Constraints
+## 6. System Boundaries
 
-### 6.1 Technical Constraints
+### 6.1 What the System DOES
+
+- Extract and structure clauses from legal documents
+- Provide AI-powered risk analysis and explanations
+- Detect potential AI-generated contract content
+- Maintain comprehensive audit trails of all actions
+- Enforce role-based access control
+- Generate compliance-ready reports
+- Store and manage document versions
+- Provide plain-language clause explanations
+
+### 6.2 What the System DOES NOT Do
+
+- Provide legal advice or legal opinions
+- Replace qualified legal counsel
+- Make binding legal decisions on behalf of users
+- Guarantee legal accuracy or completeness
+- Practice law or offer attorney services
+- Modify or edit original contract documents
+- Automatically accept or reject contract terms
+- Provide real-time legal consultation
+
+## 7. High-Level Data Entities
+
+### 7.1 Core Entities
+
+**User**
+- Unique identifier (userId)
+- Authentication credentials
+- Role assignment (Viewer, Reviewer, Admin, Auditor)
+- Profile information
+- Activity history
+
+**Document**
+- Unique identifier (documentId)
+- Original file reference (S3 key)
+- Upload metadata (timestamp, uploader, file type)
+- Processing status
+- Owner and access permissions
+
+**Clause**
+- Unique identifier (clauseId)
+- Parent document reference
+- Extracted text content
+- Category classification
+- Position in original document
+- Formatting metadata
+
+**ClauseVersion**
+- Version identifier
+- Clause reference
+- Timestamp of extraction
+- Extraction method/model version
+- Change history
+
+**AuditLog**
+- Unique log entry identifier
+- Timestamp (immutable)
+- User identifier
+- Action type
+- Resource affected
+- Previous hash (for chain integrity)
+- Current entry hash
+
+**AIAnalysisResult**
+- Analysis identifier
+- Clause reference
+- Risk level (Low, Medium, High, Critical)
+- Confidence score
+- Explanation text
+- AI model version
+- Analysis timestamp
+- Draft detection score
+
+## 8. Constraints
+
+### 8.1 Technical Constraints
 
 - Must use AWS cloud infrastructure
 - Must use Amazon Bedrock for LLM capabilities
 - Frontend must be built with React.js and TypeScript
 - Must comply with AWS Well-Architected Framework
 
-### 6.2 Regulatory Constraints
+### 8.2 Regulatory Constraints
 
 - Must comply with data protection regulations (GDPR, CCPA)
 - Must maintain audit trails for legal compliance
 - Must not provide legal advice (disclaimer required)
 - Must clearly indicate AI-generated content
+- AI outputs are advisory only; final authority remains with user
 
-### 6.3 Business Constraints
+### 8.3 Business Constraints
 
-- Initial launch: English language only (multi-language in Phase 2)
+- Initial launch: English language only
 - Budget: Optimize for AWS Free Tier where possible
 - Timeline: MVP delivery within 3 months
 - Support: Community support initially, premium support in future
 
-### 6.4 Operational Constraints
+### 8.4 Operational Constraints
 
 - System must operate 24/7 with minimal manual intervention
 - Must support remote deployment and monitoring
 - Must integrate with existing AWS monitoring tools (CloudWatch)
 
-## 7. Future Enhancements
+## 9. Human-in-the-Loop Safeguards
 
-### 7.1 Phase 2 Features
+### 9.1 AI Advisory Framework
+
+**FR-009.1**: All AI outputs shall be clearly labeled as advisory recommendations  
+**FR-009.2**: System shall display prominent disclaimer that AI analysis does not constitute legal advice  
+**FR-009.3**: Final decision authority shall remain exclusively with the user  
+**FR-009.4**: System shall never auto-execute actions based solely on AI recommendations
+
+### 9.2 User Approval Workflow
+
+**FR-009.5**: Users must explicitly acknowledge AI recommendations before taking action  
+**FR-009.6**: System shall provide "Accept", "Reject", or "Review Later" options for AI suggestions  
+**FR-009.7**: User decisions shall be logged separately from AI recommendations  
+**FR-009.8**: System shall track which AI recommendations were accepted vs. rejected
+
+### 9.3 AI Transparency Requirements
+
+**FR-009.9**: System shall display AI confidence scores for all risk assessments  
+**FR-009.10**: System shall indicate AI model version used for each analysis  
+**FR-009.11**: System shall provide "How was this determined?" explanation for each AI output  
+**FR-009.12**: System shall clearly distinguish between AI-generated and user-generated content
+
+### 9.4 Audit Separation
+
+**FR-009.13**: Audit logs shall maintain separate entries for AI recommendations and user actions  
+**FR-009.14**: System shall record timestamp of AI analysis separately from user decision timestamp  
+**FR-009.15**: Reports shall clearly differentiate AI suggestions from user-approved findings  
+**FR-009.16**: System shall track AI recommendation acceptance rate per user for quality monitoring
+
+## 10. Future Enhancements
+
+### 10.1 Phase 2 Features
+
+- Multi-language support (Hindi, Spanish, French, Arabic)
 
 - Real-time collaborative review with multiple users
 - Contract comparison and version control
@@ -213,7 +327,7 @@ Traditional solutions are expensive, lack transparency, and provide no audit tra
 - Mobile native applications (iOS, Android)
 - Advanced analytics dashboard with trend analysis
 
-### 7.2 Phase 3 Features
+### 10.2 Phase 3 Features
 
 - AI-powered contract drafting assistant
 - Legal precedent database integration
@@ -221,28 +335,28 @@ Traditional solutions are expensive, lack transparency, and provide no audit tra
 - Blockchain-based immutable audit trail
 - Integration with legal case management systems
 
-### 7.3 AI Enhancements
+### 10.3 AI Enhancements
 
 - Fine-tuned models for specific contract types (employment, NDA, SaaS)
 - Multi-modal analysis (tables, charts, signatures)
 - Sentiment analysis for negotiation tone
 - Predictive risk modeling based on historical data
 
-## 8. Success Criteria
+## 11. Success Criteria
 
-### 8.1 User Adoption
+### 11.1 User Adoption
 
 - 1,000 registered users within 3 months of launch
 - 70% user retention rate after first use
 - Average 4+ star rating on user feedback
 
-### 8.2 Technical Performance
+### 11.2 Technical Performance
 
 - 95%+ clause extraction accuracy
 - 99.9% system uptime
 - < 30 second average document processing time
 
-### 8.3 Business Impact
+### 11.3 Business Impact
 
 - 50% reduction in contract review time for users
 - 80% of users report improved contract understanding
